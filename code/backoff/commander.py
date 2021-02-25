@@ -50,6 +50,8 @@ class Commander(Process):
                 if self.ballot_number == msg.ballot_number and msg.src in waitfor:
                     waitfor.remove(msg.src)
                     if len(waitfor) < float(len(self.acceptors))/2:
+                        # print "Inside commander,", self.id," Message accepted, msg: ", msg
+                        # print "Inside commander,", self.id," Message accepted, self.ballot_number, self.slot_number, self.command: ", self.ballot_number, self.slot_number, self.command
                         for r in self.replicas:
                             self.sendMessage(r, DecisionMessage(self.id, self.slot_number, self.command))
                         return

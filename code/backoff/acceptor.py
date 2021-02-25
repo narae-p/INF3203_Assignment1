@@ -39,9 +39,21 @@ class Acceptor(Process):
             msg = self.getNextMessage()
             if isinstance(msg, P1aMessage):
                 if msg.ballot_number > self.ballot_number:
+                    # print "Inside acceptor,", self.id," P1aMessage BEFORE msg.ballot_number: ", msg.ballot_number, " self.ballot_number:", self.ballot_number
                     self.ballot_number = msg.ballot_number
+                    # print "Inside acceptor,", self.id," P1aMessage AFTER msg.ballot_number: ", msg.ballot_number, " self.ballot_number:", self.ballot_number
                 self.sendMessage(msg.src, P1bMessage(self.id, self.ballot_number, self.accepted))
             elif isinstance(msg, P2aMessage):
+                # print "Inside acceptor,", self.id," msg.ballot_number: ", msg.ballot_number, " self.ballot_number:", self.ballot_number
                 if msg.ballot_number == self.ballot_number:
+                    # print "Inside acceptor,", self.id," Message accepted, BEFORE self.accepted: ", self.accepted
+                    # print "Inside acceptor,", self.id," Message accepted, self.acceptedProposalCount BEFORE : ", self.env.acceptedProposalCount
                     self.accepted.add(PValue(msg.ballot_number,msg.slot_number,msg.command))
+                    # self.env.addAcceptedProposalCount()
+                    # print "Inside acceptor,", self.id," Message accepted, self.acceptedProposalCount AFTER : ", self.env.acceptedProposalCount
+                    # print "Inside acceptor,", self.id," Message accepted, AFTER self.accepted: ", self.accepted, "\n"
+                # else:
+                    # print "Inside acceptor,", self.id," Message not accepted\n"
+                self.env.addTotalProposalCount()
                 self.sendMessage(msg.src, P2bMessage(self.id, self.ballot_number, msg.slot_number))
+                

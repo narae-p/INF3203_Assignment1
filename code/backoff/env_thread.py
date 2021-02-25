@@ -6,9 +6,8 @@ from process import Process
 from replica import Replica
 from utils import *
 
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 import threading
-import multiprocessing as mp
 
 NACCEPTORS = 3
 NREPLICAS = 2
@@ -22,8 +21,6 @@ class Env:
     code also simulates a set of clients submitting requests.
     """
     def __init__(self, clusterSize, clientSize):
-        self.p_list = []
-        self.p2_list = []
         self.procs = {}
         self.clusterSize = clusterSize
         self.clientSize = clientSize
@@ -31,16 +28,16 @@ class Env:
         self.totalProposalCount = 0
         self.start_time = 0
 
-    def sendRequest(self, config, c):
+    def sendRequest(self, initialconfig, c):
         # Send client requests to replicas
         for i in range(NREQUESTS):
         # for i in range(self.clientSize):
             print "self.clientSize ", self.clientSize
-            # print "Task Executed ", format(threading.current_thread())
-            # print "threading.current_thread() ", threading.current_thread()
-            # print "threading.active_count() ", threading.active_count()
+            print "Task Executed ", format(threading.current_thread())
+            print "threading.current_thread() ", threading.current_thread()
+            print "threading.active_count() ", threading.active_count()
             pid = "client %d.%d" % (c,i)
-            for r in config.replicas:
+            for r in initialconfig.replicas:
                 cmd = Command(pid,0,"operation %d.%d" % (c,i))
                 self.sendMessage(r, RequestMessage(pid,cmd))
                 time.sleep(1)
@@ -52,10 +49,7 @@ class Env:
     def addTotalProposalCount(self):
         self.totalProposalCount = self.totalProposalCount + 1
         print "self.totalProposalCount:", self.totalProposalCount, ";  self.acceptedProposalCount: ",  self.acceptedProposalCount
-        if self.acceptedProposalCount == (self.clientSize * NACCEPTORS):
-            print "final self.totalProposalCount:", self.totalProposalCount, ";  self.acceptedProposalCount: ",  self.acceptedProposalCount
-            print "--- %s seconds ---" % (time.time() - self.start_time)
-            self._graceexit()
+        print "--- %s seconds ---" % (time.time() - self.start_time)
 
     def sendMessage(self, dst, msg):
         if dst in self.procs:
@@ -89,17 +83,16 @@ class Env:
             initialconfig.leaders.append(pid)
         
         self.start_time = time.time()
+        executor = ThreadPoolExecutor(max_workers=self.clientSize)
 
-        for i in range(self.clientSize):
-            self.p_list.append(
-            mp.Process(target=self.sendRequest, args=(initialconfig, c)))
-            self.p_list[i].start()
+        executor.submit(
+            self.sendRequest(initialconfig, c)
+        )
 
-        for i in self.p_list:
-            i.join()
+        self.sendRequest(initialconfig, c)
 
-        # Create new configurations. The configuration contains the
-        # leaders and the acceptors (but not the replicas).
+        # # Create new configurations. The configuration contains the
+        # # leaders and the acceptors (but not the replicas).
         # for c in range(1, NCONFIGS):
         #     config = Config(initialconfig.replicas, [], [])
         #     # Create acceptors in the new configuration
@@ -126,20 +119,12 @@ class Env:
         #             self.sendMessage(r, RequestMessage(pid, cmd))
         #             time.sleep(1)
         #     # Send client requests to replicas
-        #     for i in range(self.clientSize):
-        #         self.p2_list.append(
-        #             mp.Process(target=self.sendRequest, args=(config, c)))
-        #         self.p2_list[i].start()
-
-            # for i in self.p2_list:
-            #     i.join()
-
-            # for i in range(NREQUESTS):
-            #     pid = "client %d.%d" % (c,i)
-            #     for r in config.replicas:
-            #         cmd = Command(pid,0,"operation %d.%d"%(c,i))
-            #         self.sendMessage(r, RequestMessage(pid, cmd))
-            #         time.sleep(1)
+        #     for i in range(NREQUESTS):
+        #         pid = "client %d.%d" % (c,i)
+        #         for r in config.replicas:
+        #             cmd = Command(pid,0,"operation %d.%d"%(c,i))
+        #             self.sendMessage(r, RequestMessage(pid, cmd))
+        #             time.sleep(1)
 
     def terminate_handler(self, signal, frame):
         self._graceexit()
@@ -150,8 +135,8 @@ class Env:
         os._exit(exitcode)
 
 def main():
-    size = int(re.findall("(?!size=)\d+", sys.argv[1])[0])
-    client = int(re.findall("(?!client=)\d+", sys.argv[2])[0])
+    size = int(re.findall("(?!size=)\d", sys.argv[1])[0])
+    client = int(re.findall("(?!client=)\d", sys.argv[2])[0])
     e = Env(size, client)
     e.run()
     signal.signal(signal.SIGINT, e.terminate_handler)

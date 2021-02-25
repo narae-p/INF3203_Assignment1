@@ -93,11 +93,21 @@ class Replica(Process):
                 self.requests.append(msg.command)
             elif isinstance(msg, DecisionMessage):
                 self.decisions[msg.slot_number] = msg.command
+                # print "\nInside replica,", self.id," DecisionMessage accepted, msg: ", msg
+                # print "Inside replica,", self.id," DecisionMessage accepted, self.decisions:", self.decisions, " self.slot_out", self.slot_out, " self.proposals", self.proposals
                 while self.slot_out in self.decisions:
+                    self.env.addAcceptedProposalCount()
+                    # print "Inside replica, self.slot_out in self.decisions"
                     if self.slot_out in self.proposals:
+                        # print "Inside replica, self.slot_out in self.proposals"
                         if self.proposals[self.slot_out] != self.decisions[self.slot_out]:
+                            # print "Inside replica, self.proposals[self.slot_out] != self.decisions[self.slot_out]"
+                            # print "Inside replica, self.requests before:", self.requests
                             self.requests.append(self.proposals[self.slot_out])
+                            # print "Inside replica, self.requests after:", self.requests
+                        # print "Inside replica, self.proposals before:", self.proposals
                         del self.proposals[self.slot_out]
+                        # print "Inside replica, self.proposals after:", self.proposals
                     self.perform(self.decisions[self.slot_out])
             else:
                 print "Replica: unknown msg type"
