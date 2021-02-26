@@ -6,14 +6,14 @@ from process import Process
 from replica import Replica
 from utils import *
 
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+#from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor #####
 import threading
 import multiprocessing as mp
 
 NACCEPTORS = 3
 NREPLICAS = 2
 NLEADERS = 2
-NREQUESTS = 1
+NREQUESTS = 10 #####
 NCONFIGS = 3
 
 class Env:
@@ -43,7 +43,7 @@ class Env:
             for r in config.replicas:
                 cmd = Command(pid,0,"operation %d.%d" % (c,i))
                 self.sendMessage(r, RequestMessage(pid,cmd))
-                time.sleep(1)
+                #time.sleep(1) #####
 
     def addAcceptedProposalCount(self):
         self.acceptedProposalCount = self.acceptedProposalCount + 1
@@ -52,7 +52,8 @@ class Env:
     def addTotalProposalCount(self):
         self.totalProposalCount = self.totalProposalCount + 1
         print "self.totalProposalCount:", self.totalProposalCount, ";  self.acceptedProposalCount: ",  self.acceptedProposalCount
-        if self.acceptedProposalCount == (self.clientSize * NACCEPTORS):
+        #if self.acceptedProposalCount == (self.clientSize * NACCEPTORS): #####
+        if self.acceptedProposalCount == (self.clientSize * NREQUESTS * self.clusterSize): #####
             print "final self.totalProposalCount:", self.totalProposalCount, ";  self.acceptedProposalCount: ",  self.acceptedProposalCount
             print "--- %s seconds ---" % (time.time() - self.start_time)
             self._graceexit()
